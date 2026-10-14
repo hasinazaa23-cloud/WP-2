@@ -1,0 +1,69 @@
+<!DOCTYPE html>
+<html lang="id">
+<head>
+    <meta charset="UTF-8">
+    <title>Smart Waste Priority Dashboard</title>
+    <style>
+        body { font-family: Arial, sans-serif; background: #0f172a; color: #fff; margin: 20px; }
+        h1 { color: #38bdf8; }
+        .grid { display: flex; gap: 20px; flex-wrap: wrap; margin-top: 20px; }
+        .card { background: #1e293b; border-radius: 8px; padding: 15px; width: 280px; box-shadow: 0 4px 6px rgba(0,0,0,0.3); }
+        .badge { padding: 4px 8px; border-radius: 4px; font-weight: bold; float: right; }
+        .URGENT { background: #f31717; color: white; }
+        .MEDIUM { background: #f59e0b; color: white; }
+        .LOW { background: #10b981; color: white; }
+        .score { font-size: 2em; font-weight: bold; margin: 10px 0; color: #38bdf8; }
+        .queue-box { background: #1e293b; padding: 15px; border-radius: 8px; margin-bottom: 20px; }
+        ol { font-size: 1.2em; color: #facc15; }
+    </style>
+</head>
+<body>
+
+    <h1>Smart Waste Logistics & Priority System</h1>
+
+    <div class="queue-box">
+        <h2>🚚 Optimal Pickup Sequence (AI Priority Route)</h2>
+        <ol id="pickup-queue">
+            <li>Loading queue...</li>
+        </ol>
+    </div>
+
+    <h2>Live Container Status</h2>
+    <div class="grid" id="container-grid"></div>
+
+    <script>
+        async function fetchDashboardData() {
+            try {
+                const res = await fetch('http://localhost:5000/api/dashboard');
+                const data = await res.json();
+
+                // Update Queue
+                const queueEl = document.getElementById('pickup-queue');
+                queueEl.innerHTML = data.map(c => 
+                    `<li><b>${c.id}</b> — Priority Score: ${c.priority_score} [${c.status}]</li>`
+                ).join('');
+
+                // Update Grid Cards
+                const gridEl = document.getElementById('container-grid');
+                gridEl.innerHTML = data.map(c => `
+                    <div class="card">
+                        <span class="badge ${c.status}">${c.status}</span>
+                        <h3>${c.id}</h3>
+                        <div class="score">${c.priority_score} <small style="font-size: 12px; color: #aaa;">/100</small></div>
+                        <p>📏 Fill Level: <b>${c.fill_level.toFixed(1)}%</b></p>
+                        <p>🌡️ Temp: <b>${c.temperature.toFixed(1)}°C</b></p>
+                        <p>💧 Humidity: <b>${c.humidity.toFixed(1)}%</b></p>
+                        <p>🫧 Gas/VOC: <b>${c.gas_ppm.toFixed(0)} PPM</b></p>
+                    </div>
+                `).join('');
+
+            } catch (err) {
+                console.error("Failed to load dashboard data", err);
+            }
+        }
+
+        setInterval(fetchDashboardData, 3000);
+        fetchDashboardData();
+    </script>
+</body>
+</html>
